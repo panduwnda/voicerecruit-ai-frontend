@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoiceRecruit AI - Portfolio Privat Al Faiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .progress-bar {
+        transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(0.8);
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+        70% {
+          transform: scale(1);
+          box-shadow: 0 0 0 20px rgba(239, 68, 68, 0);
+        }
+        100% {
+          transform: scale(0.8);
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+      }
+      .recording-pulse {
+        animation: pulse-ring 2s infinite;
+      }
+
+      /* Custom scrollbar for traits */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+
+      /* Tab transitions */
+      .tab-content {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .tab-content.active {
+        display: flex;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative overflow-x-hidden">
+    <div class="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 -z-10"></div>
+    <div class="absolute top-0 right-0 w-1/2 h-96 bg-blue-500 blur-[150px] opacity-20 -z-10 rounded-full"></div>
+
+    <header class="text-white pt-8 pb-12">
+      <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+            <i class="ph-fill ph-brain text-2xl text-blue-300"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-2xl tracking-tight text-white drop-shadow-sm">VoiceRecruit AI</h1>
+            <p class="text-blue-200 text-sm font-medium">Deep Learning Personality Assessment</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-sm">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+          <span class="text-xs font-semibold tracking-wide text-emerald-50 uppercase">Portofolio: AI Engineer</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 pb-16 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Input Section -->
+      <div class="lg:col-span-5 flex flex-col">
+        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 flex-1 flex flex-col relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-0 opacity-50"></div>
+
+          <div class="relative z-10 mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-duotone ph-waveform text-blue-500 text-2xl"></i> Input Audio</h2>
+          </div>
+
+          <!-- Tabs Navigation -->
+          <div class="flex p-1 bg-slate-100 rounded-xl mb-6 relative z-10">
+            <button onclick="switchTab('record')" id="tab-record" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-2">
+              <i class="ph-bold ph-microphone"></i> Rekam Suara
+            </button>
+            <button onclick="switchTab('upload')" id="tab-upload" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-2">
+              <i class="ph-bold ph-upload-simple"></i> Upload File
+            </button>
+          </div>
+
+          <!-- TAB 1: RECORDING -->
+          <div id="content-record" class="tab-content active flex-col items-center justify-center py-2 relative z-10 flex-1">
+            <!-- REAL-TIME VISUALIZER CANVAS -->
+            <div class="w-full h-24 mb-6 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center overflow-hidden relative">
+              <!-- Canvas ini akan digambar oleh Web Audio API -->
+              <canvas id="audioCanvas" class="w-full h-full opacity-80"></canvas>
+              <div id="visualizerPlaceholder" class="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none">
+                <i class="ph-duotone ph-waves text-3xl"></i>
+              </div>
+            </div>
+
+            <div id="timer" class="text-4xl font-black text-slate-800 mb-8 tracking-tight tabular-nums">0:00</div>
+
+            <div class="relative flex items-center justify-center w-28 h-28 mb-4">
+              <button
+                id="recordBtn"
+                class="absolute z-20 flex items-center justify-center w-20 h-20 rounded-full text-white bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                <i id="recordIcon" class="ph-fill ph-microphone text-3xl"></i>
+              </button>
+            </div>
+
+            <p id="statusText" class="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-2">Ketuk untuk Mulai</p>
+          </div>
+
+          <!-- TAB 2: UPLOAD FILE -->
+          <div id="content-upload" class="tab-content flex-col items-center justify-center py-2 relative z-10 flex-1">
+            <div class="w-full h-48 border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-2xl flex flex-col items-center justify-center p-6 text-center transition-colors hover:bg-blue-50" id="dropZone">
+              <div class="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-blue-500 border border-blue-100">
+                <i class="ph-duotone ph-file-audio text-2xl"></i>
+              </div>
+              <p class="font-semibold text-slate-700 mb-1">Pilih File Audio</p>
+              <p class="text-xs text-slate-500 mb-4">Mendukung format WAV, MP3, M4A (Max 10MB)</p>
+
+              <input type="file" id="audioUpload" accept="audio/wav, audio/mp3, audio/mpeg, audio/m4a" class="hidden" />
+              <button onclick="document.getElementById('audioUpload').click()" class="px-6 py-2 bg-white text-blue-600 font-semibold text-sm rounded-xl border border-blue-200 shadow-sm hover:bg-blue-50 transition-colors">Cari File</button>
+            </div>
+
+            <!-- File Info (Hidden initially) -->
+            <div id="fileInfo" class="hidden w-full mt-4 bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center justify-between">
+              <div class="flex items-center gap-3 overflow-hidden">
+                <i class="ph-fill ph-check-circle text-emerald-500 text-xl"></i>
+                <span id="fileName" class="text-sm font-semibold text-emerald-800 truncate max-w-[150px]">audio.wav</span>
+              </div>
+              <button id="removeFileBtn" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">Hapus</button>
+            </div>
+          </div>
+
+          <!-- Action Buttons (Shared for both tabs) -->
+          <div id="actionButtons" class="hidden w-full flex gap-3 mt-auto pt-6 relative z-10">
+            <button id="resetBtn" class="flex-1 px-5 py-3.5 rounded-2xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+              <i class="ph-bold ph-arrow-counter-clockwise text-lg"></i> Ulangi
+            </button>
+            <button
+              id="analyzeBtn"
+              class="flex-[2] px-5 py-3.5 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <i class="ph-fill ph-sparkle text-blue-400 text-xl"></i> Analisis AI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="lg:col-span-7 flex flex-col">
+        <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 flex-1 flex flex-col relative overflow-hidden min-h-[500px]">
+          <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/80 backdrop-blur-md z-30 flex flex-col items-center justify-center text-slate-800 transition-all">
+            <div class="relative w-24 h-24 mb-6">
+              <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+              <div class="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <i class="ph-fill ph-brain text-3xl text-blue-500 animate-pulse"></i>
+              </div>
+            </div>
+            <h3 id="loadingTitle" class="text-xl font-extrabold tracking-tight">Menganalisis Audio...</h3>
+            <p id="loadingDesc" class="text-slate-500 text-sm mt-2 font-medium">Mengekstrak fitur akustik ke Python</p>
+          </div>
+
+          <div id="emptyOverlay" class="absolute inset-0 bg-slate-50/50 z-20 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
+            <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-4 transition-all" id="emptyIconBox">
+              <i id="emptyIcon" class="ph-duotone ph-chart-polar text-4xl text-slate-300"></i>
+            </div>
+            <p id="emptyText" class="font-medium text-slate-500">Berikan input audio untuk melihat profil analitik AI.</p>
+          </div>
+
+          <div id="resultContent" class="hidden h-full flex flex-col z-10 animate-fade-in-up">
+            <div class="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+              <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-fingerprint text-blue-500 text-2xl"></i> Profil Kepribadian (OCEAN)</h2>
+              <div class="flex items-center gap-3 bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100">
+                <div class="text-right">
+                  <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Kecocokan</p>
+                  <p class="text-xl font-black text-slate-800 leading-none"><span id="scoreOverall">0</span>%</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-blue-600 border border-blue-50">
+                  <i class="ph-bold ph-check"></i>
+                </div>
+              </div>
+            </div>
+
+            <div id="traitsContainer" class="flex-1 space-y-5"></div>
+
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="ph-fill ph-terminal-window text-slate-400"></i>
+                  <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Fitur Akustik (Python)</p>
+                </div>
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm mb-2">
+                  <span class="text-sm font-medium text-slate-600">Dominan AI</span>
+                  <span id="featTempo" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md"></span>
+                </div>
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                  <span class="text-sm font-medium text-slate-600">Volume RMS</span>
+                  <span id="featEnergy" class="text-sm font-bold text-slate-800"></span>
+                </div>
+              </div>
+              <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-100/50 flex flex-col justify-center">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="ph-fill ph-check-circle text-emerald-500"></i>
+                  <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Keputusan HR AI</p>
+                </div>
+                <p id="recommendationText" class="text-sm font-medium text-emerald-900 leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // --- UI TAB LOGIC ---
+      let currentMode = "record"; // 'record' or 'upload'
+
+      function switchTab(mode) {
+        currentMode = mode;
+
+        // Tab styling
+        document.getElementById("tab-record").className =
+          mode === "record"
+            ? "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-2"
+            : "flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-2";
+
+        document.getElementById("tab-upload").className =
+          mode === "upload"
+            ? "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-2"
+            : "flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-2";
+
+        // Content switching
+        document.getElementById("content-record").classList.toggle("active", mode === "record");
+        document.getElementById("content-upload").classList.toggle("active", mode === "upload");
+
+        // Handle action buttons visibility
+        handleActionButtonsVisibility();
+      }
+
+      // --- REAL-TIME AUDIO VISUALIZER (WEB AUDIO API) ---
+      let audioContext;
+      let analyser;
+      let dataArray;
+      let animationId;
+      const canvas = document.getElementById("audioCanvas");
+      const canvasCtx = canvas.getContext("2d");
+      const visualizerPlaceholder = document.getElementById("visualizerPlaceholder");
+
+      // Set ukuran canvas agar tajam
+      function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      function drawVisualizer() {
+        animationId = requestAnimationFrame(drawVisualizer);
+        analyser.getByteFrequencyData(dataArray);
+
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Gaya visualizer modern (balok melengkung)
+        const barWidth = (canvas.width / dataArray.length) * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+          // Modifikasi agar tidak terlalu flat saat hening
+          const barHeight = Math.max(2, (dataArray[i] / 255) * canvas.height);
+
+          // Gradien warna biru ke ungu
+          const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+          gradient.addColorStop(0, "#3b82f6"); // blue-500
+          gradient.addColorStop(1, "#8b5cf6"); // violet-500
+
+          canvasCtx.fillStyle = gradient;
+
+          // Gambar balok dengan rounded corners di atas
+          canvasCtx.beginPath();
+          canvasCtx.roundRect(x, canvas.height - barHeight, barWidth - 2, barHeight, [4, 4, 0, 0]);
+          canvasCtx.fill();
+
+          x += barWidth;
+        }
+      }
+
+      // --- RECORDING LOGIC ---
+      let mediaRecorder;
+      let audioStream;
+      let audioChunks = [];
+      let isRecording = false;
+      let timerInterval;
+      let seconds = 0;
+      let finalAudioBlob = null; // Audio siap kirim (Bisa dari rekam atau upload)
+
+      const recordBtn = document.getElementById("recordBtn");
+      const recordIcon = document.getElementById("recordIcon");
+      const statusText = document.getElementById("statusText");
+      const timerText = document.getElementById("timer");
+      const actionButtons = document.getElementById("actionButtons");
+      const analyzeBtn = document.getElementById("analyzeBtn");
+
+      function updateTimer() {
+        seconds++;
+        timerText.innerText = `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`;
+      }
+
+      recordBtn.addEventListener("click", async () => {
+        if (!isRecording) {
+          try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // Setup Audio Context untuk Visualizer
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaStreamSource(audioStream);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 64; // Menentukan jumlah balok
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            source.connect(analyser);
+
+            visualizerPlaceholder.classList.add("hidden"); // Sembunyikan ikon statis
+            drawVisualizer(); // Mulai gambar gelombang asli
+
+            // Setup Media Recorder
+            mediaRecorder = new MediaRecorder(audioStream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+              finalAudioBlob = new Blob(audioChunks, { type: "audio/webm" });
+              audioStream.getTracks().forEach((track) => track.stop());
+              cancelAnimationFrame(animationId);
+              canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+              visualizerPlaceholder.classList.remove("hidden");
+
+              recordBtn.parentElement.classList.add("hidden");
+              statusText.innerText = "Audio siap dianalisis";
+              handleActionButtonsVisibility();
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            seconds = 0;
+            timerText.innerText = "0:00";
+            timerInterval = setInterval(updateTimer, 1000);
+
+            recordBtn.className = "absolute z-20 flex items-center justify-center w-20 h-20 rounded-full text-white bg-red-500 shadow-xl shadow-red-500/40 transition-all transform scale-110 recording-pulse";
+            recordIcon.className = "ph-fill ph-stop text-3xl";
+            statusText.innerText = "Merekam Frekuensi Nyata...";
+            statusText.classList.add("text-red-500", "animate-pulse");
+          } catch (err) {
+            alert("Akses mikrofon ditolak: " + err);
+          }
+        } else {
+          mediaRecorder.stop();
+          isRecording = false;
+          clearInterval(timerInterval);
+          statusText.classList.remove("text-red-500", "animate-pulse");
+          if (audioContext && audioContext.state !== "closed") audioContext.close();
+        }
+      });
+
+      // --- UPLOAD LOGIC ---
+      const audioUploadInput = document.getElementById("audioUpload");
+      const fileInfo = document.getElementById("fileInfo");
+      const fileNameDisplay = document.getElementById("fileName");
+      const dropZone = document.getElementById("dropZone");
+
+      audioUploadInput.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          // Validasi ukuran (Max 10MB)
+          if (file.size > 10 * 1024 * 1024) {
+            alert("Ukuran file maksimal 10MB");
+            this.value = "";
+            return;
+          }
+
+          finalAudioBlob = file;
+          fileNameDisplay.innerText = file.name;
+          dropZone.classList.add("hidden");
+          fileInfo.classList.remove("hidden");
+          handleActionButtonsVisibility();
+        }
+      });
+
+      document.getElementById("removeFileBtn").addEventListener("click", () => {
+        audioUploadInput.value = "";
+        finalAudioBlob = null;
+        fileInfo.classList.add("hidden");
+        dropZone.classList.remove("hidden");
+        handleActionButtonsVisibility();
+      });
+
+      // --- UI SHARED LOGIC ---
+      function handleActionButtonsVisibility() {
+        if (currentMode === "record") {
+          actionButtons.classList.toggle("hidden", finalAudioBlob === null);
+        } else if (currentMode === "upload") {
+          actionButtons.classList.toggle("hidden", finalAudioBlob === null);
+        }
+      }
+
+      function resetEmptyState() {
+        document.getElementById("emptyText").innerText = "Berikan input audio untuk melihat profil analitik AI.";
+        document.getElementById("emptyText").classList.remove("text-red-500");
+        document.getElementById("emptyText").classList.add("text-slate-500");
+        document.getElementById("emptyIcon").className = "ph-duotone ph-chart-polar text-4xl text-slate-300";
+        document.getElementById("emptyIconBox").classList.remove("bg-red-50");
+        document.getElementById("emptyIconBox").classList.add("bg-slate-100");
+      }
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        finalAudioBlob = null;
+
+        // Reset Record UI
+        recordBtn.parentElement.classList.remove("hidden");
+        recordBtn.className =
+          "absolute z-20 flex items-center justify-center w-20 h-20 rounded-full text-white bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95";
+        recordIcon.className = "ph-fill ph-microphone text-3xl";
+        statusText.innerText = "Ketuk untuk Mulai";
+        timerText.innerText = "0:00";
+
+        // Reset Upload UI
+        audioUploadInput.value = "";
+        fileInfo.classList.add("hidden");
+        dropZone.classList.remove("hidden");
+
+        actionButtons.classList.add("hidden");
+
+        resetEmptyState();
+        document.getElementById("emptyOverlay").classList.remove("hidden");
+        document.getElementById("resultContent").classList.add("hidden");
+      });
+
+      // Encoder ke WAV (dibutuhkan jika audio berasal dari rekaman WebM browser)
+      function encodeWAV(samples, sampleRate) {
+        let buffer = new ArrayBuffer(44 + samples.length * 2);
+        let view = new DataView(buffer);
+        let writeString = function (view, offset, string) {
+          for (let i = 0; i < string.length; i++) view.setUint8(offset + i, string.charCodeAt(i));
+        };
+        writeString(view, 0, "RIFF");
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(view, 8, "WAVE");
+        writeString(view, 12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(view, 36, "data");
+        view.setUint32(40, samples.length * 2, true);
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+          let s = Math.max(-1, Math.min(1, samples[i]));
+          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+        return new Blob([view], { type: "audio/wav" });
+      }
+
+      analyzeBtn.addEventListener("click", async () => {
+        if (!finalAudioBlob) return;
+
+        const loading = document.getElementById("loadingOverlay");
+        loading.classList.remove("hidden");
+        document.getElementById("emptyOverlay").classList.add("hidden");
+        document.getElementById("resultContent").classList.add("hidden");
+
+        try {
+          let fileToSend = finalAudioBlob;
+
+          // Jika audio dari hasil rekaman (webm), konversi dulu ke WAV agar Python aman.
+          // Jika dari upload (WAV/MP3), kita bisa kirim langsung.
+          if (currentMode === "record") {
+            document.getElementById("loadingTitle").innerText = "Konversi Format...";
+            const arrayBuffer = await finalAudioBlob.arrayBuffer();
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            fileToSend = encodeWAV(audioBuffer.getChannelData(0), audioBuffer.sampleRate);
+          }
+
+          document.getElementById("loadingTitle").innerText = "Menganalisis Audio...";
+          const formData = new FormData();
+
+          // Gunakan ekstensi wav secara default, atau ekstensi asli jika upload
+          const fileName = currentMode === "upload" ? finalAudioBlob.name : "recording.wav";
+          formData.append("audio", fileToSend, fileName);
+
+          const response = await fetch("http://localhost:8000/analyze", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) throw new Error("Gagal terhubung ke API Python");
+
+          const result = await response.json();
+
+          if (result.is_silence) {
+            loading.classList.add("hidden");
+            const emptyOverlay = document.getElementById("emptyOverlay");
+            emptyOverlay.classList.remove("hidden");
+
+            document.getElementById("emptyText").innerText = result.message;
+            document.getElementById("emptyText").classList.replace("text-slate-500", "text-red-500");
+            document.getElementById("emptyIcon").className = "ph-duotone ph-warning-circle text-4xl text-red-400";
+            document.getElementById("emptyIconBox").classList.replace("bg-slate-100", "bg-red-50");
+            return;
+          }
+
+          tampilkanHasil(result);
+        } catch (err) {
+          console.error(err);
+          alert("Koneksi gagal! Pastikan terminal Python (FastAPI) berjalan di port 8000.");
+          loading.classList.add("hidden");
+          resetEmptyState();
+          document.getElementById("emptyOverlay").classList.remove("hidden");
+        }
+      });
+
+      function tampilkanHasil(data) {
+        document.getElementById("loadingOverlay").classList.add("hidden");
+        document.getElementById("resultContent").classList.remove("hidden");
+
+        let currentScore = 0;
+        const targetScore = data.overallFit;
+        const scoreEl = document.getElementById("scoreOverall");
+        const scoreInterval = setInterval(() => {
+          if (currentScore >= targetScore) {
+            clearInterval(scoreInterval);
+            scoreEl.innerText = targetScore;
+          } else {
+            currentScore += 2;
+            scoreEl.innerText = Math.min(currentScore, targetScore);
+          }
+        }, 20);
+
+        const tempoValue = data.raw_features.tempo_bpm || "Terdeteksi";
+        document.getElementById("featTempo").innerText = tempoValue.toUpperCase();
+        document.getElementById("featEnergy").innerText = data.raw_features.energy;
+        document.getElementById("recommendationText").innerText = data.recommendation;
+
+        const traitsData = [
+          { id: "openness", name: "Openness", desc: "Kreativitas & Keterbukaan", bg: "bg-slate-100", fill: "from-sky-400 to-blue-500" },
+          { id: "conscientiousness", name: "Conscientiousness", desc: "Ketelitian & Disiplin", bg: "bg-slate-100", fill: "from-emerald-400 to-green-500" },
+          { id: "extraversion", name: "Extraversion", desc: "Tingkat Sosialisasi", bg: "bg-slate-100", fill: "from-amber-400 to-orange-500" },
+          { id: "agreeableness", name: "Agreeableness", desc: "Keramahan & Empati", bg: "bg-slate-100", fill: "from-purple-400 to-violet-500" },
+          { id: "neuroticism", name: "Neuroticism", desc: "Sensitivitas Emosi", bg: "bg-slate-100", fill: "from-rose-400 to-red-500" },
+        ];
+
+        const container = document.getElementById("traitsContainer");
+        container.innerHTML = "";
+
+        traitsData.forEach((trait, index) => {
+          const score = data.traits[trait.id];
+          const html = `
+                    <div class="group">
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <span class="font-bold text-slate-800">${trait.name}</span>
+                                <span class="text-[10px] ml-2 font-medium text-slate-400 uppercase tracking-wider hidden sm:inline-block">${trait.desc}</span>
+                            </div>
+                            <span class="font-black text-slate-800">${score}%</span>
+                        </div>
+                        <div class="w-full ${trait.bg} rounded-full h-3 overflow-hidden shadow-inner border border-slate-200/50">
+                            <div class="h-full bg-gradient-to-r ${trait.fill} rounded-full progress-bar relative" style="width: 0%">
+                                <div class="absolute inset-0 bg-white/20 w-full h-full transform -skew-x-12 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+          container.innerHTML += html;
+        });
+
+        setTimeout(() => {
+          const bars = container.querySelectorAll(".progress-bar");
+          bars.forEach((bar, index) => {
+            const traitId = traitsData[index].id;
+            bar.style.width = `${data.traits[traitId]}%`;
+          });
+        }, 100);
+      }
+    </script>
+  </body>
+</html>
