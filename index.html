@@ -54,6 +54,16 @@
         display: flex;
         opacity: 1;
       }
+
+      /* Custom Audio Player Styling */
+      audio {
+        width: 100%;
+        height: 40px;
+        outline: none;
+      }
+      audio::-webkit-media-controls-panel {
+        background-color: #f8fafc; /* slate-50 */
+      }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative overflow-x-hidden">
@@ -105,7 +115,6 @@
           <div id="content-record" class="tab-content active flex-col items-center justify-center py-2 relative z-10 flex-1">
             <!-- REAL-TIME VISUALIZER CANVAS -->
             <div class="w-full h-24 mb-6 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center overflow-hidden relative">
-              <!-- Canvas ini akan digambar oleh Web Audio API -->
               <canvas id="audioCanvas" class="w-full h-full opacity-80"></canvas>
               <div id="visualizerPlaceholder" class="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none">
                 <i class="ph-duotone ph-waves text-3xl"></i>
@@ -114,7 +123,7 @@
 
             <div id="timer" class="text-4xl font-black text-slate-800 mb-8 tracking-tight tabular-nums">0:00</div>
 
-            <div class="relative flex items-center justify-center w-28 h-28 mb-4">
+            <div class="relative flex items-center justify-center w-28 h-28 mb-4" id="recordBtnContainer">
               <button
                 id="recordBtn"
                 class="absolute z-20 flex items-center justify-center w-20 h-20 rounded-full text-white bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95"
@@ -139,7 +148,6 @@
               <button onclick="document.getElementById('audioUpload').click()" class="px-6 py-2 bg-white text-blue-600 font-semibold text-sm rounded-xl border border-blue-200 shadow-sm hover:bg-blue-50 transition-colors">Cari File</button>
             </div>
 
-            <!-- File Info (Hidden initially) -->
             <div id="fileInfo" class="hidden w-full mt-4 bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center justify-between">
               <div class="flex items-center gap-3 overflow-hidden">
                 <i class="ph-fill ph-check-circle text-emerald-500 text-xl"></i>
@@ -149,17 +157,25 @@
             </div>
           </div>
 
-          <!-- Action Buttons (Shared for both tabs) -->
-          <div id="actionButtons" class="hidden w-full flex gap-3 mt-auto pt-6 relative z-10">
-            <button id="resetBtn" class="flex-1 px-5 py-3.5 rounded-2xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
-              <i class="ph-bold ph-arrow-counter-clockwise text-lg"></i> Ulangi
-            </button>
-            <button
-              id="analyzeBtn"
-              class="flex-[2] px-5 py-3.5 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <i class="ph-fill ph-sparkle text-blue-400 text-xl"></i> Analisis AI
-            </button>
+          <!-- Action Buttons & Audio Playback (Shared for both tabs) -->
+          <div id="actionButtons" class="hidden w-full flex flex-col gap-4 mt-auto pt-6 relative z-10">
+            <!-- AUDIO PLAYER UNTUK MENDENGARKAN HASIL -->
+            <div class="w-full bg-slate-100/70 p-2 rounded-2xl border border-slate-200 shadow-inner">
+              <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-2 mb-1">Pratinjau Suara Anda</p>
+              <audio id="audioPlayback" controls class="w-full"></audio>
+            </div>
+
+            <div class="flex gap-3 w-full">
+              <button id="resetBtn" class="flex-1 px-5 py-3.5 rounded-2xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+                <i class="ph-bold ph-arrow-counter-clockwise text-lg"></i> Ulangi
+              </button>
+              <button
+                id="analyzeBtn"
+                class="flex-[2] px-5 py-3.5 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              >
+                <i class="ph-fill ph-sparkle text-blue-400 text-xl"></i> Analisis AI
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -237,7 +253,6 @@
       function switchTab(mode) {
         currentMode = mode;
 
-        // Tab styling
         document.getElementById("tab-record").className =
           mode === "record"
             ? "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-2"
@@ -248,11 +263,9 @@
             ? "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all flex items-center justify-center gap-2"
             : "flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-2";
 
-        // Content switching
         document.getElementById("content-record").classList.toggle("active", mode === "record");
         document.getElementById("content-upload").classList.toggle("active", mode === "upload");
 
-        // Handle action buttons visibility
         handleActionButtonsVisibility();
       }
 
@@ -265,7 +278,6 @@
       const canvasCtx = canvas.getContext("2d");
       const visualizerPlaceholder = document.getElementById("visualizerPlaceholder");
 
-      // Set ukuran canvas agar tajam
       function resizeCanvas() {
         canvas.width = canvas.parentElement.clientWidth;
         canvas.height = canvas.parentElement.clientHeight;
@@ -279,22 +291,18 @@
 
         canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Gaya visualizer modern (balok melengkung)
         const barWidth = (canvas.width / dataArray.length) * 2.5;
         let x = 0;
 
         for (let i = 0; i < dataArray.length; i++) {
-          // Modifikasi agar tidak terlalu flat saat hening
           const barHeight = Math.max(2, (dataArray[i] / 255) * canvas.height);
 
-          // Gradien warna biru ke ungu
           const gradient = canvasCtx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
           gradient.addColorStop(0, "#3b82f6"); // blue-500
           gradient.addColorStop(1, "#8b5cf6"); // violet-500
 
           canvasCtx.fillStyle = gradient;
 
-          // Gambar balok dengan rounded corners di atas
           canvasCtx.beginPath();
           canvasCtx.roundRect(x, canvas.height - barHeight, barWidth - 2, barHeight, [4, 4, 0, 0]);
           canvasCtx.fill();
@@ -309,19 +317,30 @@
       let audioChunks = [];
       let isRecording = false;
       let timerInterval;
+      let visualizerInterval;
       let seconds = 0;
-      let finalAudioBlob = null; // Audio siap kirim (Bisa dari rekam atau upload)
+      let finalAudioBlob = null;
 
+      const recordBtnContainer = document.getElementById("recordBtnContainer");
       const recordBtn = document.getElementById("recordBtn");
       const recordIcon = document.getElementById("recordIcon");
       const statusText = document.getElementById("statusText");
       const timerText = document.getElementById("timer");
       const actionButtons = document.getElementById("actionButtons");
       const analyzeBtn = document.getElementById("analyzeBtn");
+      const audioPlayback = document.getElementById("audioPlayback"); // Audio Player baru
 
       function updateTimer() {
         seconds++;
         timerText.innerText = `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, "0")}`;
+      }
+
+      function animateVisualizer() {
+        Array.from(visualizer.children).forEach((bar, index) => {
+          const height = Math.random() * 60 + 20 + Math.sin(index + Date.now() / 100) * 20;
+          bar.style.height = `${Math.min(100, Math.max(10, height))}%`;
+          bar.className = "w-1.5 md:w-2 bg-gradient-to-t from-blue-500 to-indigo-400 rounded-full transition-all duration-75";
+        });
       }
 
       recordBtn.addEventListener("click", async () => {
@@ -329,19 +348,17 @@
           try {
             audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            // Setup Audio Context untuk Visualizer
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioContext.createMediaStreamSource(audioStream);
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 64; // Menentukan jumlah balok
+            analyser.fftSize = 64;
             const bufferLength = analyser.frequencyBinCount;
             dataArray = new Uint8Array(bufferLength);
             source.connect(analyser);
 
-            visualizerPlaceholder.classList.add("hidden"); // Sembunyikan ikon statis
-            drawVisualizer(); // Mulai gambar gelombang asli
+            visualizerPlaceholder.classList.add("hidden");
+            drawVisualizer();
 
-            // Setup Media Recorder
             mediaRecorder = new MediaRecorder(audioStream);
             audioChunks = [];
 
@@ -356,8 +373,8 @@
               canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
               visualizerPlaceholder.classList.remove("hidden");
 
-              recordBtn.parentElement.classList.add("hidden");
-              statusText.innerText = "Audio siap dianalisis";
+              recordBtnContainer.classList.add("hidden");
+              statusText.innerText = "Audio siap dienkripsi";
               handleActionButtonsVisibility();
             };
 
@@ -392,13 +409,11 @@
       audioUploadInput.addEventListener("change", function (e) {
         const file = e.target.files[0];
         if (file) {
-          // Validasi ukuran (Max 10MB)
           if (file.size > 10 * 1024 * 1024) {
             alert("Ukuran file maksimal 10MB");
             this.value = "";
             return;
           }
-
           finalAudioBlob = file;
           fileNameDisplay.innerText = file.name;
           dropZone.classList.add("hidden");
@@ -417,10 +432,13 @@
 
       // --- UI SHARED LOGIC ---
       function handleActionButtonsVisibility() {
-        if (currentMode === "record") {
-          actionButtons.classList.toggle("hidden", finalAudioBlob === null);
-        } else if (currentMode === "upload") {
-          actionButtons.classList.toggle("hidden", finalAudioBlob === null);
+        if (finalAudioBlob) {
+          actionButtons.classList.remove("hidden");
+          // Masukkan file audio/blob ke dalam pemutar suara
+          audioPlayback.src = URL.createObjectURL(finalAudioBlob);
+        } else {
+          actionButtons.classList.add("hidden");
+          audioPlayback.src = "";
         }
       }
 
@@ -436,15 +454,17 @@
       document.getElementById("resetBtn").addEventListener("click", () => {
         finalAudioBlob = null;
 
-        // Reset Record UI
-        recordBtn.parentElement.classList.remove("hidden");
+        // Hentikan pemutaran jika sedang berjalan
+        audioPlayback.pause();
+        audioPlayback.src = "";
+
+        recordBtnContainer.classList.remove("hidden");
         recordBtn.className =
           "absolute z-20 flex items-center justify-center w-20 h-20 rounded-full text-white bg-gradient-to-tr from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 shadow-xl shadow-blue-500/30 transition-all duration-300 transform hover:scale-105 active:scale-95";
         recordIcon.className = "ph-fill ph-microphone text-3xl";
         statusText.innerText = "Ketuk untuk Mulai";
         timerText.innerText = "0:00";
 
-        // Reset Upload UI
         audioUploadInput.value = "";
         fileInfo.classList.add("hidden");
         dropZone.classList.remove("hidden");
@@ -456,7 +476,6 @@
         document.getElementById("resultContent").classList.add("hidden");
       });
 
-      // Encoder ke WAV (dibutuhkan jika audio berasal dari rekaman WebM browser)
       function encodeWAV(samples, sampleRate) {
         let buffer = new ArrayBuffer(44 + samples.length * 2);
         let view = new DataView(buffer);
@@ -487,6 +506,9 @@
       analyzeBtn.addEventListener("click", async () => {
         if (!finalAudioBlob) return;
 
+        // Matikan pemutaran audio secara otomatis saat analisis dimulai
+        audioPlayback.pause();
+
         const loading = document.getElementById("loadingOverlay");
         loading.classList.remove("hidden");
         document.getElementById("emptyOverlay").classList.add("hidden");
@@ -495,8 +517,6 @@
         try {
           let fileToSend = finalAudioBlob;
 
-          // Jika audio dari hasil rekaman (webm), konversi dulu ke WAV agar Python aman.
-          // Jika dari upload (WAV/MP3), kita bisa kirim langsung.
           if (currentMode === "record") {
             document.getElementById("loadingTitle").innerText = "Konversi Format...";
             const arrayBuffer = await finalAudioBlob.arrayBuffer();
@@ -507,12 +527,10 @@
 
           document.getElementById("loadingTitle").innerText = "Menganalisis Audio...";
           const formData = new FormData();
-
-          // Gunakan ekstensi wav secara default, atau ekstensi asli jika upload
           const fileName = currentMode === "upload" ? finalAudioBlob.name : "recording.wav";
           formData.append("audio", fileToSend, fileName);
 
-          const response = await fetch("https://panduwnda-voicerecruit-api.hf.space/analyze", {
+          const response = await fetch("http://localhost:8000/analyze", {
             method: "POST",
             body: formData,
           });
@@ -608,4 +626,3 @@
     </script>
   </body>
 </html>
-
